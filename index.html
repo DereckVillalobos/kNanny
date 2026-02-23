@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pantalla de Seguridad</title>
+  <!-- Cargar TailwindCSS desde CDN para estilos de utilidades -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Cargar React y ReactDOM desde unpkg -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Cargar Babel para compilar JSX en el navegador -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    /* Definición de algunas animaciones utilizadas en el componente */
+    @keyframes breathe {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.2); }
+    }
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes shakeX {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-4px); }
+      40%, 80% { transform: translateX(4px); }
+    }
+    body {
+      margin: 0;
+      background-color: black;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <!-- Contenedor raíz donde se montará la aplicación -->
+  <div id="root"></div>
+
+  <script type="text/babel">
+    // Obtener useState y useEffect desde React
+    const { useState, useEffect } = React;
+
+    /*
+     * Componente SecurityGate
+     * Copiado del archivo kNanny.jsx y adaptado eliminando las importaciones.
+     */
+    function SecurityGate({ onPass }) {
+      const [selectedNums, setSelectedNums] = useState(new Set());
+      const [selectedGenre, setSelectedGenre] = useState(null);
+      const [numbersCorrect, setNumbersCorrect] = useState(false);
+      const [genreCorrect, setGenreCorrect] = useState(false);
+      const [showMessage, setShowMessage] = useState(false);
+      const [canContinue, setCanContinue] = useState(false);
+      const [mounted, setMounted] = useState(false);
+      const [shakeNums, setShakeNums] = useState(false);
+      const [shakeGenre, setShakeGenre] = useState(false);
+
+      useEffect(() => { setMounted(true); }, []);
+
+      const toggleNum = (n) => {
+        if (numbersCorrect) return;
+        const next = new Set(selectedNums);
+        if (next.has(n)) next.delete(n);
+        else {
+          if (next.size >= 2) {
+            const first = [...next][0];
+            next.delete(first);
+          }
+          next.add(n);
+        }
+        setSelectedNums(next);
+
+        if (next.size === 2) {
+          if (next.has(7) && next.has(9)) {
+            setTimeout(() => setNumbersCorrect(true), 400);
+          } else {
+            setTimeout(() => {
+              setShakeNums(true);
+              setTimeout(() => { setShakeNums(false); setSelectedNums(new Set()); }, 600);
+            }, 300);
+          }
+        }
+      };
+
+      const selectGenre = (g) => {
+        if (genreCorrect) return;
+        setSelectedGenre(g);
+        if (g === "romance") {
+          setTimeout(() => {
+            setGenreCorrect(true);
+            setTimeout(() => {
+              setShowMessage(true);
+              setTimeout(() => setCanContinue(true), 2200);
+            }, 600);
+          }, 400);
+        } else {
+          setTimeout(() => {
+            setShakeGenre(true);
+            setTimeout(() => { setShakeGenre(false); setSelectedGenre(null); }, 600);
+          }, 300);
+        }
+      };
+
+      const genres = [
+        { id: "accion", label: "Acción" },
+        { id: "romance", label: "Romance" },
+        { id: "terror", label: "Terror" },
+      ];
+
+      return (
+        <div className="min-h-screen w-full bg-black relative overflow-x-hidden overflow-y-auto flex items-start justify-center"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
+          {/* Grid de fondo */}
+          <div className="absolute inset-0" style={{
+            opacity: 0.18,
+            backgroundImage: `linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px)`,
+            backgroundSize: "60px 60px",
+            animation: "breathe 8s ease-in-out infinite",
+          }} />
+
+          {/* Vignette */}
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: "radial-gradient(ellipse at 50% 30%, transparent 20%, rgba(0,0,0,0.8) 100%)",
+          }} />
+
+          <div className="relative z-10 w-full max-w-sm px-5 py-14" style={{ paddingBottom: "max(56px, env(safe-area-inset-bottom, 56px))", marginTop: "auto", marginBottom: "auto" }}>
+
+            {/* Encabezado */}
+            <div className="text-center mb-10" style={{
+              opacity: 0,
+              animation: mounted ? "fadeSlideUp 1s cubic-bezier(0.16,1,0.3,1) 0.1s forwards" : "none",
+            }}>
+              <div className="flex items-center justify-center gap-4 mb-3">
+                <div style={{ width: "28px", height: "1px", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.12))" }} />
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                <div style={{ width: "28px", height: "1px", background: "linear-gradient(270deg, transparent, rgba(255,255,255,0.12))" }} />
+              </div>
+              <h1 style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontSize: "11px", fontWeight: 400,
+                letterSpacing: "0.4em", textTransform: "uppercase",
+                color: "rgba(255,255,255,0.45)",
+              }}>
+                Pregunta de Seguridad
+              </h1>
+            </div>
+
+            {/* ── Pregunta 1: Números ── */}
+            <div style={{
+              opacity: 0,
+              animation: mounted ? "fadeSlideUp 0.9s cubic-bezier(0.16,1,0.3,1) 0.3s forwards" : "none",
+            }}>
+              <div className="mb-5">
+                <p style={{
+                  fontFamily: "'Cormorant Garamond', serif",
+                  fontSize: "18px", fontWeight: 300,
+                  color: numbersCorrect ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.6)",
+                  letterSpacing: "0.03em", lineHeight: 1.6,
+                  transition: "color 0.6s ease",
+                }}>
+                  ¿Cuáles son tus números favoritos?
+                </p>
+              </div>
+              {/* Cuadrícula de números */}
+              <div className="grid grid-cols-5 gap-2 mb-3" style={{
+                animation: shakeNums ? "shakeX 0.5s ease-in-out" : "none",
+              }}>
+                {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => {
+                  const isSelected = selectedNums.has(n);
+                  const isCorrectNum = numbersCorrect && (n === 7 || n === 9);
+                  const dimmed = numbersCorrect && !isCorrectNum;
+
+                  return (
+                    <button
+                      key={n}
+                      onClick={() => toggleNum(n)}
+                      disabled={numbersCorrect}
+                      className="relative focus:outline-none"
+                      style={{
+                        width: "100%", aspectRatio: "1",
+                        border: `1px solid ${
+                          isCorrectNum ? "rgba(255,255,255,0.2)"
+                          : isSelected ? "rgba(255,255,255,0.25)"
+                          : "rgba(255,255,255,0.06)"
+                        }`,
+                        borderRadius: "6px",
+                        background: isCorrectNum
+                          ? "rgba(255,255,255,0.04)"
+                          : isSelected
+                          ? "rgba(255,255,255,0.03)"
+                          : "transparent",
+                        cursor: numbersCorrect ? "default" : "pointer",
+                        transition: "all 0.35s cubic-bezier(0.16,1,0.3,1)",
+                        opacity: dimmed ? 0.2 : 1,
+                        transform: isCorrectNum ? "scale(1.05)" : "scale(1)",
+                      }}
+                    >
+                      <span style={{
+                        fontFamily: "'Cormorant Garamond', serif",
+                        fontSize: "15px", fontWeight: 400,
+                        color: isCorrectNum
+                          ? "rgba(255,255,255,0.6)"
+                          : isSelected
+                          ? "rgba(255,255,255,0.5)"
+                          : "rgba(255,255,255,0.2)",
+                        transition: "color 0.35s ease",
+                      }}>
+                        {n}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              {/* Indicador de números correctos */}
+              <div className="flex items-center gap-2 mb-8" style={{
+                opacity: numbersCorrect ? 1 : 0,
+                transform: numbersCorrect ? "translateY(0)" : "translateY(6px)",
+                transition: "all 0.6s ease",
+              }}>
+                <div style={{ width: "16px", height: "1px", background: "rgba(255,255,255,0.15)" }} />
+                <span style={{
+                  fontFamily: "'Inter', sans-serif", fontSize: "9px",
+                  letterSpacing: "0.2em", textTransform: "uppercase",
+                  color: "rgba(255,255,255,0.2)",
+                }}>correcto</span>
+              </div>
+            </div>
+
+            {/* ── Pregunta 2: Género ── */}
+            <div style={{
+              opacity: 0,
+              animation: mounted ? "fadeSlideUp 0.9s cubic-bezier(0.16,1,0.3,1) 0.5s forwards" : "none",
+            }}>
+              <div className="mb-5">
+                <p style={{
+                  fontFamily: "'Cormorant Garamond', serif",
+                  fontSize: "18px", fontWeight: 300,
+                  color: genreCorrect ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.6)",
+                  letterSpacing: "0.03em", lineHeight: 1.6,
+                  transition: "color 0.6s ease",
+                }}>
+                  ¿Cuál es tu género de películas favorito?
+                </p>
+              </div>
+              {/* Botones de género */}
+              <div className="flex flex-col gap-4 mb-3" style={{
+                animation: shakeGenre ? "shakeX 0.5s ease-in-out" : "none",
+              }}>
+                {genres.map((g) => {
+                  const isCorrect = genreCorrect && g.id === "romance";
+                  const dimmed = genreCorrect && !isCorrect;
+                  return (
+                    <button
+                      key={g.id}
+                      onClick={() => selectGenre(g.id)}
+                      disabled={genreCorrect}
+                      className="w-full py-2 px-3 rounded-md text-left focus:outline-none"
+                      style={{
+                        border: `1px solid ${
+                          isCorrect ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.06)"
+                        }`,
+                        background: isCorrect
+                          ? "rgba(255,255,255,0.04)"
+                          : "transparent",
+                        opacity: dimmed ? 0.2 : 1,
+                        cursor: genreCorrect ? "default" : "pointer",
+                        transition: "all 0.35s cubic-bezier(0.16,1,0.3,1)",
+                      }}
+                    >
+                      <span style={{
+                        fontFamily: "'Cormorant Garamond', serif",
+                        fontSize: "15px", fontWeight: 400,
+                        color: isCorrect
+                          ? "rgba(255,255,255,0.6)"
+                          : "rgba(255,255,255,0.4)",
+                        textTransform: "capitalize",
+                      }}>
+                        {g.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              {/* Indicador de género correcto */}
+              <div className="flex items-center gap-2 mb-8" style={{
+                opacity: genreCorrect ? 1 : 0,
+                transform: genreCorrect ? "translateY(0)" : "translateY(6px)",
+                transition: "all 0.6s ease",
+              }}>
+                <div style={{ width: "16px", height: "1px", background: "rgba(255,255,255,0.15)" }} />
+                <span style={{
+                  fontFamily: "'Inter', sans-serif", fontSize: "9px",
+                  letterSpacing: "0.2em", textTransform: "uppercase",
+                  color: "rgba(255,255,255,0.2)",
+                }}>correcto</span>
+              </div>
+            </div>
+
+            {/* Mensaje final y botón de continuar */}
+            <div style={{
+              opacity: showMessage ? 1 : 0,
+              transition: "opacity 0.8s ease",
+            }}>
+              <div className="text-center mb-8">
+                <p style={{
+                  fontFamily: "'Cormorant Garamond', serif",
+                  fontSize: "18px", fontWeight: 300,
+                  color: "rgba(255,255,255,0.6)",
+                  letterSpacing: "0.03em", lineHeight: 1.6,
+                }}>
+                  ¡Gracias! Puedes continuar.
+                </p>
+              </div>
+              <div className="flex justify-center">
+                <button
+                  onClick={() => onPass && onPass()}
+                  disabled={!canContinue}
+                  className="px-5 py-3 rounded-md text-sm font-medium"
+                  style={{
+                    background: canContinue ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)",
+                    color: canContinue ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.4)",
+                    cursor: canContinue ? "pointer" : "default",
+                    transition: "background 0.3s ease, color 0.3s ease",
+                  }}
+                >
+                  Continuar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Aplicación principal que monta el componente SecurityGate
+    function App() {
+      return <SecurityGate onPass={() => alert('Acceso concedido')} />;
+    }
+
+    // Montar la aplicación en el DOM
+    const rootElement = document.getElementById('root');
+    const rootReact = ReactDOM.createRoot(rootElement);
+    rootReact.render(<App />);
+  </script>
+</body>
+</html>
